@@ -13,16 +13,18 @@ class Application(tk.Frame):
 
         self.create_UI()
         self.insert_map()
-        #self.insert_dish()
-        #self.draw_dish()
+        self.insert_dish()
 
     def create_UI(self):
+        # Create a Top frame where the activity takes place
         self.top_frame = tk.Frame(root, width=1280, height=840)
         self.top_frame.pack(fill=tk.BOTH, expand=True)
 
+        # Create a bottom frame for UI
         self.bottom_frame = tk.Frame(root, relief=tk.RAISED, borderwidth=1)
         self.bottom_frame.pack(side = tk.BOTTOM, fill=tk.BOTH, expand=True)
 
+        # button to exit program - TODO: PUT THIS IN A CONTROL GENERATION METHOD
         self.quit_button = tk.Button(self.bottom_frame, text="Quit", fg="red", command=root.destroy)
         self.quit_button.pack( side = tk.RIGHT, padx=5, pady=5)
 
@@ -33,6 +35,12 @@ class Application(tk.Frame):
         self.map_display = tk.Label(self.top_frame, image=self.map, borderwidth=0)
         self.map_display.grid(column=0, row=0)
         self.map_display.pack(fill=tk.BOTH, expand=True)
+
+    def insert_dish(self):
+        self.dish_original = Image.open(self.dish_path)
+        self.dish_original = self.dish_original.resize((20, 20), Image.ANTIALIAS)
+        self.dish = ImageTk.PhotoImage(self.dish_original)
+        self.dish_canvas = tk.Label(self.top_frame, image=self.dish, borderwidth=0).place(x = 800, y = 400)
 
 
 
