@@ -4,6 +4,74 @@ from PIL import ImageTk, Image
 
 import math
 
+
+
+class Dish():
+    def __init__(self, x_pos=0, y_pos=0, altitude=1, azimuth=0, elevation=0):
+        self.x_position = x_pos
+        self.y_position = y_pos
+        self.altitude = altitude
+        self.azimuth = azimuth
+        self.elevation = elevation
+
+        self.image_path = 'dish.png'
+
+        self.create_image()
+
+    def create_image(self):
+        # Create Image
+        dish_original = Image.open(self.image_path)
+        dish_original = dish_original.resize((20, 20), Image.ANTIALIAS)
+
+        # Work out angle rotation
+        angle = self.rotation()
+        
+
+        self.dish_img = ImageTk.PhotoImage(dish_original.rotate(angle))
+
+    def adjust_azimuth(self, adjustment):
+        if (self.azimuth <= 0) and (adjustment == -1):
+            self.azimuth = 359
+        elif (self.azimuth >= 359) and (adjustment == 1):
+            self.azimuth = 0
+        else:
+            self.azimuth += adjustment
+
+        # Create Image
+        dish_original = Image.open(self.image_path)
+        dish_original = dish_original.resize((20, 20), Image.ANTIALIAS)
+
+        # Work out angle rotation
+        angle = self.rotation()
+
+        self.dish_img = ImageTk.PhotoImage(dish_original.rotate(angle))
+
+    def rotation(self):
+        adjusted_angle = 0
+
+        if (self.azimuth >= 45):
+            adjusted_angle = 360 - (self.azimuth - 45)
+        else:
+            adjusted_angle = 45 - self.azimuth
+
+        return adjusted_angle
+
+class Boat():
+    def __init__(self, x_pos=0, y_pos=0, altitude=1):
+        self.x_position = x_pos
+        self.y_position = y_pos
+        self.altitude = altitude
+
+        self.image_path = 'boat.jpg'
+
+        self.create_image()
+
+    def create_image(self):
+        # Create Image
+        boat_original = Image.open(self.image_path)
+        boat_original = boat_original.resize((20, 20), Image.ANTIALIAS)
+        self.boat_img = ImageTk.PhotoImage(boat_original)
+
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
@@ -15,15 +83,13 @@ class Application(tk.Frame):
         self.dish_path = 'dish.png'
         self.boat_path = 'boat.jpg'
 
-
-
         self.create_UI()
         self.insert_map()
         self.insert_dish()
         self.insert_boat()
 
         self.create_line()
-        self.modify_line()
+        self.draw()
 
     def create_UI(self):
         # Create a Top canvas to draw on
@@ -76,57 +142,52 @@ class Application(tk.Frame):
 
     def insert_dish(self):
         # Variables for Dish data
-        self.elevation = 0
-        self.azimuth = 0
-        self.dish_position_x = 1000
-        self.dish_position_y = 200
+        self.dish = Dish(1000, 200, 1, 0, 0)
 
-        self.dish_original = Image.open(self.dish_path)
-        self.dish_original = self.dish_original.resize((20, 20), Image.ANTIALIAS)
-        self.dish = ImageTk.PhotoImage(self.dish_original)
-        self.dish_canvas = tk.Label(self.map_canvas, image=self.dish, borderwidth=0).place(x = self.dish_position_x, y = self.dish_position_y)
+        self.dish_canvas = tk.Label(self.map_canvas, image=self.dish.dish_img, borderwidth=0).place(x = self.dish.x_position, y = self.dish.y_position)
 
+    # Depreciated
     def insert_boat(self):
-        # Variables for Boat data
-        self.boat_position_x = 1100
-        self.boat_position_y = 100
+        self.boat = Boat(1100, 100, 0)
 
-        self.boat_original = Image.open(self.boat_path)
-        self.boat_original = self.boat_original.resize((20, 20), Image.ANTIALIAS)
-        self.boat = ImageTk.PhotoImage(self.boat_original)
-        self.boat_canvas = tk.Label(self.map_canvas, image=self.boat, borderwidth=0).place(x = self.boat_position_x, y = self.boat_position_y)
+        self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.boat_img, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
 
     def create_line(self):
         # Line variables
-        self.line_end_position_x = self.dish_position_x + 10
-        self.line_end_position_y = self.dish_position_y + 10
+        self.line_start_position_x = self.dish.x_position + 10
+        self.line_start_position_y = self.dish.y_position + 10
 
-        self.map_canvas.create_line(self.dish_position_x + 10, self.dish_position_y + 10, self.line_end_position_x + 100 * math.sin(self.azimuth), self.line_end_position_y - 100 * math.cos(self.azimuth), width=2, fill='red', tags="direction")
+        self.line_end_position_x = self.line_start_position_x
+        self.line_end_position_y = self.line_start_position_y
 
-    def modify_line(self):
-        # Determining Line Position
-        x0 = self.dish_position_x + 10
-        y0 = self.dish_position_y + 10
-        x1 = self.line_end_position_x + 100 * math.sin(self.azimuth * ((2*math.pi)/360))
-        y1 = self.line_end_position_y - 100 * math.cos(self.azimuth * ((2*math.pi)/360))
+        #self.line_end_position_x = self.line_start_position_x + 100 * math.sin(self.dish.azimuth * ((2*math.pi)/360))
+        #self.line_end_position_y = self.line_start_position_y - 100 * math.cos(self.dish.azimuth * ((2*math.pi)/360))
 
-        self.map_canvas.coords("direction", (x0, y0, x1, y1))
-        self.after(1, self.modify_line)
+        self.map_canvas.create_line(self.line_start_position_x, self.line_start_position_y, self.line_end_position_x, self.line_end_position_y, width=2, fill='red', tags="direction")
 
     def turn_CCW(self):
         # Turn the line CCW
-        if self.azimuth <= 0:
-            self.azimuth = 359
-        else:
-            self.azimuth -= 1
+        self.dish.adjust_azimuth(-1)
 
     def turn_CW(self):
         # Turn the line CW
-        if self.azimuth >= 359:
-            self.azimuth = 0
-        else:
-            self.azimuth += 1
+        self.dish.adjust_azimuth(1)
 
+    def draw(self):
+        # Draw Radar
+        self.map_canvas.delete(self.dish_canvas)
+        self.dish_canvas = tk.Label(self.map_canvas, image=self.dish.dish_img, borderwidth=0).place(x = self.dish.x_position, y = self.dish.y_position)
+
+        # Draw Boat
+        self.map_canvas.delete(self.boat_canvas)
+        self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.boat_img, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
+
+        # Draw Line
+        self.line_end_position_x = self.line_start_position_x + 300 * math.sin(self.dish.azimuth * ((2*math.pi)/360))
+        self.line_end_position_y = self.line_start_position_y - 300 * math.cos(self.dish.azimuth * ((2*math.pi)/360))
+
+        self.map_canvas.coords("direction", (self.line_start_position_x, self.line_start_position_y, self.line_end_position_x, self.line_end_position_y))
+        self.after(50, self.draw)
 
 def main():
     root = tk.Tk()
