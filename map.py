@@ -50,6 +50,7 @@ class Dish():
 
     def adjust_elevation(self, adjustment):
         self.elevation += adjustment
+        self.elevation = round(self.elevation, 2)
 
     def rotation(self):
         adjusted_angle = 0
@@ -166,7 +167,7 @@ class Application(tk.Frame):
         self.azimuth_display_box.grid(row=0, column=1)
 
         # Generate Azimuth changing variable
-        self.elevation_var = tk.IntVar()
+        self.elevation_var = tk.DoubleVar()
         self.elevation_var.set(self.dish.elevation)
 
         # Generate Elevation Display
@@ -226,11 +227,24 @@ class Application(tk.Frame):
 
     def turn_up(self):
         # Adjust elevation upwards
-        self.dish.adjust_elevation(1)
+        self.dish.adjust_elevation(0.01)
 
     def turn_down(self):
         # Adjust elevation upwards
-        self.dish.adjust_elevation(-1)
+        self.dish.adjust_elevation(-0.01)
+
+    def calculate_line_length(self):
+        max_length = 300
+
+        if self.dish.elevation == 0:
+            return max_length
+
+        line_length = (self.dish.altitude - self.boat.altitude) / math.tan(abs(self.dish.elevation) * ((2*math.pi)/360))
+
+        if line_length > max_length:
+            return max_length
+
+        return line_length
 
     def draw(self):
         # Draw Radar
@@ -242,8 +256,9 @@ class Application(tk.Frame):
         self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.boat_img, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
 
         # Draw Line
-        self.line_end_position_x = self.line_start_position_x + 300 * math.sin(self.dish.azimuth * ((2*math.pi)/360))
-        self.line_end_position_y = self.line_start_position_y - 300 * math.cos(self.dish.azimuth * ((2*math.pi)/360))
+        line_length = self.calculate_line_length()
+        self.line_end_position_x = self.line_start_position_x + line_length * math.sin(self.dish.azimuth * ((2*math.pi)/360))
+        self.line_end_position_y = self.line_start_position_y - line_length * math.cos(self.dish.azimuth * ((2*math.pi)/360))
 
         self.map_canvas.coords("direction", (self.line_start_position_x, self.line_start_position_y, self.line_end_position_x, self.line_end_position_y))
         self.after(50, self.draw)
