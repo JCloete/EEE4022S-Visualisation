@@ -62,21 +62,21 @@ class Dish():
 
         return adjusted_angle
 
-class Boat():
-    def __init__(self, x_pos=0, y_pos=0, altitude=1):
+class Target():
+    def __init__(self, x_pos=0, y_pos=0, altitude=1, image_path=''):
         self.x_position = x_pos
         self.y_position = y_pos
         self.altitude = altitude
 
-        self.image_path = 'boat.jpg'
+        self.image_path = image_path
 
         self.create_image()
 
     def create_image(self):
         # Create Image
-        boat_original = Image.open(self.image_path)
-        boat_original = boat_original.resize((20, 20), Image.ANTIALIAS)
-        self.boat_img = ImageTk.PhotoImage(boat_original)
+        image_original = Image.open(self.image_path)
+        image_original = image_original.resize((20, 20), Image.ANTIALIAS)
+        self.image_tk = ImageTk.PhotoImage(image_original)
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -87,16 +87,21 @@ class Application(tk.Frame):
         # Path for images
         self.map_path = 'Test.jpg'
         self.dish_path = 'dish.png'
-        self.boat_path = 'boat.jpg'
 
+        # Create the base Layer
         self.create_base_layout()
+
+        # Insert all relevant objects
         self.insert_map()
         self.insert_dish()
+        self.insert_line()
         self.insert_boat()
+
+        # Insert all the controls
         self.create_controls()
         self.create_info_panel()
 
-        self.create_line()
+        # Draw the Scene
         self.draw()
 
     def create_base_layout(self):
@@ -147,16 +152,17 @@ class Application(tk.Frame):
         self.info_frame = tk.Frame(self.bottom_frame, borderwidth=2)
         self.info_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
+        # Create the dish frame
         self.dish_frame = tk.Frame(self.info_frame, relief=tk.RIDGE, borderwidth=3, padx=5)
 
-        # Create the relevant labels
+        # Create the Pedestal labels
         # Generate Title Label
         self.dish_title = tk.Label(self.dish_frame, text="Dish Information", width=16, anchor=tk.CENTER)
         self.dish_title.grid(row=0, column=1, columnspan=3, padx=2, pady=3)
 
         # Generate Azimuth changing variable
         self.azimuth_var = tk.IntVar()
-        self.azimuth_var.set(self.dish.azimuth)
+        self.azimuth_var.set(float(self.dish.azimuth))
 
         # Generate Azimuth Display
         self.azimuth_display = tk.Label(self.dish_frame, text="Azimuth:", relief=tk.GROOVE, width=8, height=1)
@@ -182,8 +188,44 @@ class Application(tk.Frame):
         
         self.dish_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
 
+        # ====================================================================================================================================
+        # Create the Target frame
+        self.target_frame = tk.Frame(self.info_frame, relief=tk.RIDGE, borderwidth=3, padx=5)
+
+        # Create the Target labels
+        # Generate title Label
+        self.target_title = tk.Label(self.target_frame, text="Target Information", width=16, anchor=tk.CENTER)
+        self.target_title.grid(row=0, column=1, columnspan=3, padx=2, pady=3)
+
+        # Generate desired Azimuth changing variable
+        self.desired_azimuth_var = tk.IntVar()
+        self.desired_azimuth_var.set(self.calculate_azimuth())
+
+        # Generate Azimuth Display
+        self.desired_azimuth_display = tk.Label(self.target_frame, text="Desired Azimuth:", relief=tk.GROOVE, width=14, height=1)
+        self.desired_azimuth_display.grid(row=1, column=1, padx=2, pady=3)
+        self.desired_azimuth_display_box = tk.Label(self.target_frame, textvariable=self.desired_azimuth_var, relief=tk.SUNKEN, width=4, height=1)
+        self.desired_azimuth_display_box.grid(row=1, column=2)
+
+        # Generate Azimuth changing variable
+        self.desired_elevation_var = tk.DoubleVar()
+        self.desired_elevation_var.set(self.dish.elevation)
+
+        # Generate Elevation Display
+        self.desired_elevation_display = tk.Label(self.target_frame, text="Desired Elevation:", relief=tk.GROOVE, width=14, height=1)
+        self.desired_elevation_display.grid(row=2, column=1)
+        self.desired_elevation_display_box = tk.Label(self.target_frame, textvariable=self.desired_elevation_var, relief=tk.SUNKEN, width=4, height=1)
+        self.desired_elevation_display_box.grid(row=2, column=2)
+
+        # Generate Units
+        self.desired_azimuth_units = tk.Label(self.target_frame, text=u"\N{DEGREE SIGN} (deg)")
+        self.desired_azimuth_units.grid(row=1, column=3)
+        self.desired_elevation_units = tk.Label(self.target_frame, text=u"\N{DEGREE SIGN} (deg)")
+        self.desired_elevation_units.grid(row=2, column=3)
+
+        self.target_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+
         
-        # =============================================================================================================
 
     def insert_map(self):
         self.map_original = Image.open(self.map_path)
@@ -200,11 +242,11 @@ class Application(tk.Frame):
 
     # Depreciated
     def insert_boat(self):
-        self.boat = Boat(1100, 100, 0)
+        self.boat = Target(1100, 100, 0, 'boat.jpg')
 
-        self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.boat_img, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
+        self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.image_tk, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
 
-    def create_line(self):
+    def insert_line(self):
         # Line variables
         self.line_start_position_x = self.dish.x_position + 10
         self.line_start_position_y = self.dish.y_position + 10
@@ -243,6 +285,18 @@ class Application(tk.Frame):
 
         return line_length
 
+    def calculate_azimuth(self):
+        azimuth = math.atan2(self.boat.x_position - self.dish.x_position, self.boat.y_position - self.dish.y_position)
+        azimuth = (180 - azimuth * (180/math.pi)) % 360
+
+        return round(azimuth, 1)
+
+    def calculate_elevation(self):
+        length = (math.sqrt((self.boat.x_position - self.dish.x_position)**2 + (self.boat.y_position - self.dish.y_position)**2))
+        elevation = math.atan2(float(self.boat.altitude - self.dish.altitude), length) * (180/math.pi)
+
+        return round(elevation, 2)
+
     def draw(self):
         # Draw Radar
         self.map_canvas.delete(self.dish_canvas)
@@ -250,7 +304,7 @@ class Application(tk.Frame):
 
         # Draw Boat
         self.map_canvas.delete(self.boat_canvas)
-        self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.boat_img, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
+        self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.image_tk, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
 
         # Draw Line
         line_length = self.calculate_line_length()
@@ -261,8 +315,11 @@ class Application(tk.Frame):
         self.after(50, self.draw)
 
         # Update Labels
-        self.azimuth_var.set(self.dish.azimuth)
+        self.azimuth_var.set(float(self.dish.azimuth))
         self.elevation_var.set(self.dish.elevation)
+
+        self.desired_azimuth_var.set(self.calculate_azimuth())
+        self.desired_elevation_var.set(self.calculate_elevation())
 
 def main():
     root = tk.Tk()
