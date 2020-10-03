@@ -144,45 +144,45 @@ class Application(tk.Frame):
     def create_info_panel(self):
         # =============================================================================================================
         # Info Frame
-        self.info_frame = tk.Frame(self.bottom_frame, borderwidth=1)
+        self.info_frame = tk.Frame(self.bottom_frame, borderwidth=2)
+        self.info_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Configure Grid for the Buttons
-        self.info_frame.columnconfigure(0, pad=3)
-        self.info_frame.columnconfigure(1, pad=3)
-        self.info_frame.columnconfigure(2, pad=3)
-        self.info_frame.columnconfigure(3, pad=3)
-
-        self.info_frame.rowconfigure(0, pad=3)
-        self.info_frame.rowconfigure(1, pad=3)
+        self.dish_frame = tk.Frame(self.info_frame, relief=tk.RIDGE, borderwidth=3, padx=5)
 
         # Create the relevant labels
+        # Generate Title Label
+        self.dish_title = tk.Label(self.dish_frame, text="Dish Information", width=16, anchor=tk.CENTER)
+        self.dish_title.grid(row=0, column=1, columnspan=3, padx=2, pady=3)
+
         # Generate Azimuth changing variable
         self.azimuth_var = tk.IntVar()
         self.azimuth_var.set(self.dish.azimuth)
 
         # Generate Azimuth Display
-        self.azimuth_display = tk.Label(self.info_frame, text="Azimuth:", relief=tk.GROOVE, width=8, height=1)
-        self.azimuth_display.grid(row=0, column=0)
-        self.azimuth_display_box = tk.Label(self.info_frame, textvariable=self.azimuth_var, relief=tk.SUNKEN, width=4, height=1)
-        self.azimuth_display_box.grid(row=0, column=1)
+        self.azimuth_display = tk.Label(self.dish_frame, text="Azimuth:", relief=tk.GROOVE, width=8, height=1)
+        self.azimuth_display.grid(row=1, column=1, padx=2, pady=3)
+        self.azimuth_display_box = tk.Label(self.dish_frame, textvariable=self.azimuth_var, relief=tk.SUNKEN, width=4, height=1)
+        self.azimuth_display_box.grid(row=1, column=2)
 
         # Generate Azimuth changing variable
         self.elevation_var = tk.DoubleVar()
         self.elevation_var.set(self.dish.elevation)
 
         # Generate Elevation Display
-        self.elevation_display = tk.Label(self.info_frame, text="Elevation:", relief=tk.GROOVE, width=8, height=1)
-        self.elevation_display.grid(row=1, column=0)
-        self.elevation_display_box = tk.Label(self.info_frame, textvariable=self.elevation_var, relief=tk.SUNKEN, width=4, height=1)
-        self.elevation_display_box.grid(row=1, column=1)
+        self.elevation_display = tk.Label(self.dish_frame, text="Elevation:", relief=tk.GROOVE, width=8, height=1)
+        self.elevation_display.grid(row=2, column=1)
+        self.elevation_display_box = tk.Label(self.dish_frame, textvariable=self.elevation_var, relief=tk.SUNKEN, width=4, height=1)
+        self.elevation_display_box.grid(row=2, column=2)
 
         # Generate Units
-        self.elevation_units = tk.Label(self.info_frame, text=u"\N{DEGREE SIGN} (deg)")
-        self.elevation_units.grid(row=1, column=3)
-        self.azimuth_units = tk.Label(self.info_frame, text=u"\N{DEGREE SIGN} (deg)")
-        self.azimuth_units.grid(row=0, column=3)
+        self.azimuth_units = tk.Label(self.dish_frame, text=u"\N{DEGREE SIGN} (deg)")
+        self.azimuth_units.grid(row=1, column=3)
+        self.elevation_units = tk.Label(self.dish_frame, text=u"\N{DEGREE SIGN} (deg)")
+        self.elevation_units.grid(row=2, column=3)
+        
+        self.dish_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
 
-        self.info_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+        
         # =============================================================================================================
 
     def insert_map(self):
@@ -212,9 +212,6 @@ class Application(tk.Frame):
         self.line_end_position_x = self.line_start_position_x
         self.line_end_position_y = self.line_start_position_y
 
-        #self.line_end_position_x = self.line_start_position_x + 100 * math.sin(self.dish.azimuth * ((2*math.pi)/360))
-        #self.line_end_position_y = self.line_start_position_y - 100 * math.cos(self.dish.azimuth * ((2*math.pi)/360))
-
         self.map_canvas.create_line(self.line_start_position_x, self.line_start_position_y, self.line_end_position_x, self.line_end_position_y, width=2, fill='red', tags="direction")
 
     def turn_CCW(self):
@@ -234,7 +231,7 @@ class Application(tk.Frame):
         self.dish.adjust_elevation(-0.01)
 
     def calculate_line_length(self):
-        max_length = 300
+        max_length = 300.0
 
         if self.dish.elevation == 0:
             return max_length
