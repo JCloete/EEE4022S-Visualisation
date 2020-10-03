@@ -29,6 +29,8 @@ class Dish():
 
         self.dish_img = ImageTk.PhotoImage(dish_original.rotate(angle))
 
+
+    # TODO: Add in Limits to azimuth and elevation
     def adjust_azimuth(self, adjustment):
         if (self.azimuth <= 0) and (adjustment == -1):
             self.azimuth = 359
@@ -45,6 +47,9 @@ class Dish():
         angle = self.rotation()
 
         self.dish_img = ImageTk.PhotoImage(dish_original.rotate(angle))
+
+    def adjust_elevation(self, adjustment):
+        self.elevation += adjustment
 
     def rotation(self):
         adjusted_angle = 0
@@ -83,15 +88,17 @@ class Application(tk.Frame):
         self.dish_path = 'dish.png'
         self.boat_path = 'boat.jpg'
 
-        self.create_UI()
+        self.create_base_layout()
         self.insert_map()
         self.insert_dish()
         self.insert_boat()
+        self.create_controls()
+        self.create_info_panel()
 
         self.create_line()
         self.draw()
 
-    def create_UI(self):
+    def create_base_layout(self):
         # Create a Top canvas to draw on
         self.map_canvas = tk.Canvas(self.master, width=1280, height=760)
         self.map_canvas.pack(fill=tk.BOTH, expand=True)
@@ -104,6 +111,9 @@ class Application(tk.Frame):
         self.quit_button = tk.Button(self.bottom_frame, text="Quit", fg="red", command=self.master.destroy, width=5, height=2)
         self.quit_button.pack( side = tk.RIGHT, padx=5, pady=5)
 
+    def create_controls(self):
+        # ===============================================================================================
+        # Controls Frame
         self.control_frame = tk.Frame(self.bottom_frame, relief=tk.RAISED, borderwidth=1)
 
         # Configure Grid for the buttons
@@ -115,23 +125,64 @@ class Application(tk.Frame):
         self.control_frame.rowconfigure(1, pad=3)
         self.control_frame.rowconfigure(2, pad=3)
 
-        self.up_button = tk.Button(self.control_frame, text="Up", width=5, height=2)
+        # Create the relevant Buttons
+        self.up_button = tk.Button(self.control_frame, text="Up", command=self.turn_up, width=5, height=2)
         self.up_button.grid(row=0, column=1)
-        #self.up_button.pack(side = tk.TOP, padx=5, pady=5)
 
         self.left_button = tk.Button(self.control_frame, text="CCW", command=self.turn_CCW, width=5, height=2)
         self.left_button.grid(row=1, column=0)
-        #self.left_button.pack(side = tk.LEFT, padx=5, pady=5)
 
         self.right_button = tk.Button(self.control_frame, text="CW", command=self.turn_CW, width=5, height=2)
         self.right_button.grid(row=1, column=2)
-        #self.right_button.pack(side = tk.RIGHT, padx=5, pady=5)
 
-        self.down_button = tk.Button(self.control_frame, text="Down", width=5, height=2)
+        self.down_button = tk.Button(self.control_frame, text="Down", command=self.turn_down, width=5, height=2)
         self.down_button.grid(row=2, column=1)
-        #self.down_button.pack(side = tk.BOTTOM, padx=5, pady=5)
 
         self.control_frame.pack(side = tk.LEFT, fill=tk.BOTH, expand=False)
+
+    def create_info_panel(self):
+        # =============================================================================================================
+        # Info Frame
+        self.info_frame = tk.Frame(self.bottom_frame, borderwidth=1)
+
+        # Configure Grid for the Buttons
+        self.info_frame.columnconfigure(0, pad=3)
+        self.info_frame.columnconfigure(1, pad=3)
+        self.info_frame.columnconfigure(2, pad=3)
+        self.info_frame.columnconfigure(3, pad=3)
+
+        self.info_frame.rowconfigure(0, pad=3)
+        self.info_frame.rowconfigure(1, pad=3)
+
+        # Create the relevant labels
+        # Generate Azimuth changing variable
+        self.azimuth_var = tk.IntVar()
+        self.azimuth_var.set(self.dish.azimuth)
+
+        # Generate Azimuth Display
+        self.azimuth_display = tk.Label(self.info_frame, text="Azimuth:", relief=tk.GROOVE, width=8, height=1)
+        self.azimuth_display.grid(row=0, column=0)
+        self.azimuth_display_box = tk.Label(self.info_frame, textvariable=self.azimuth_var, relief=tk.SUNKEN, width=4, height=1)
+        self.azimuth_display_box.grid(row=0, column=1)
+
+        # Generate Azimuth changing variable
+        self.elevation_var = tk.IntVar()
+        self.elevation_var.set(self.dish.elevation)
+
+        # Generate Elevation Display
+        self.elevation_display = tk.Label(self.info_frame, text="Elevation:", relief=tk.GROOVE, width=8, height=1)
+        self.elevation_display.grid(row=1, column=0)
+        self.elevation_display_box = tk.Label(self.info_frame, textvariable=self.elevation_var, relief=tk.SUNKEN, width=4, height=1)
+        self.elevation_display_box.grid(row=1, column=1)
+
+        # Generate Units
+        self.elevation_units = tk.Label(self.info_frame, text=u"\N{DEGREE SIGN} (deg)")
+        self.elevation_units.grid(row=1, column=3)
+        self.azimuth_units = tk.Label(self.info_frame, text=u"\N{DEGREE SIGN} (deg)")
+        self.azimuth_units.grid(row=0, column=3)
+
+        self.info_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+        # =============================================================================================================
 
     def insert_map(self):
         self.map_original = Image.open(self.map_path)
@@ -173,6 +224,14 @@ class Application(tk.Frame):
         # Turn the line CW
         self.dish.adjust_azimuth(1)
 
+    def turn_up(self):
+        # Adjust elevation upwards
+        self.dish.adjust_elevation(1)
+
+    def turn_down(self):
+        # Adjust elevation upwards
+        self.dish.adjust_elevation(-1)
+
     def draw(self):
         # Draw Radar
         self.map_canvas.delete(self.dish_canvas)
@@ -188,6 +247,10 @@ class Application(tk.Frame):
 
         self.map_canvas.coords("direction", (self.line_start_position_x, self.line_start_position_y, self.line_end_position_x, self.line_end_position_y))
         self.after(50, self.draw)
+
+        # Update Labels
+        self.azimuth_var.set(self.dish.azimuth)
+        self.elevation_var.set(self.dish.elevation)
 
 def main():
     root = tk.Tk()
