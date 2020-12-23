@@ -85,7 +85,7 @@ class Application(tk.Frame):
         self.pack(fill=tk.BOTH, expand=True)
 
         # Path for images
-        self.map_path = 'Test.jpg'
+        self.map_path = 'map.png'
         self.dish_path = 'dish.png'
 
         # Create the base Layer
@@ -137,6 +137,12 @@ class Application(tk.Frame):
 
         self.left_button = tk.Button(self.control_frame, text="CCW", command=self.turn_CCW, width=5, height=2)
         self.left_button.grid(row=1, column=0)
+
+        # Icon for settings
+        self.settings_icon = ImageTk.PhotoImage(file='settings_icon.png')
+
+        self.settings_button = tk.Button(self.control_frame, image=self.settings_icon, command=self.settings_menu, width=40, height=40)
+        self.settings_button.grid(row=1, column=1)
 
         self.right_button = tk.Button(self.control_frame, text="CW", command=self.turn_CW, width=5, height=2)
         self.right_button.grid(row=1, column=2)
@@ -236,13 +242,13 @@ class Application(tk.Frame):
 
     def insert_dish(self):
         # Variables for Dish data
-        self.dish = Dish(1000, 200, 1, 0, 0)
+        self.dish = Dish(350, 470, 1, 0, 0)
 
         self.dish_canvas = tk.Label(self.map_canvas, image=self.dish.dish_img, borderwidth=0).place(x = self.dish.x_position, y = self.dish.y_position)
 
     # Depreciated
     def insert_boat(self):
-        self.boat = Target(1100, 100, 0, 'boat.jpg')
+        self.boat = Target(450, 230, 0, 'boat.jpg')
 
         self.boat_canvas = tk.Label(self.map_canvas, image=self.boat.image_tk, borderwidth=0).place(x = self.boat.x_position, y = self.boat.y_position)
 
@@ -320,6 +326,78 @@ class Application(tk.Frame):
 
         self.desired_azimuth_var.set(self.calculate_azimuth())
         self.desired_elevation_var.set(self.calculate_elevation())
+
+    #Settings Menu related functions
+    def settings_menu(self):
+        # Create the settings menu to adjust Coordinates and set Azimuth/Elevation
+        # Create new window
+        self.settings_window = tk.Toplevel(self.master)
+        self.settings_window.maxsize(250, 250)
+        self.settings_window.minsize(250, 250)
+        self.settings_frame = tk.Frame(self.settings_window)
+        self.settings_frame.pack(fill=tk.BOTH, expand=False)
+
+        # Grids
+        # Configure Grid for the buttons
+        self.settings_frame.columnconfigure(0, pad=6)
+        self.settings_frame.columnconfigure(1, pad=6)
+
+        self.settings_frame.rowconfigure(0, pad=6)
+        self.settings_frame.rowconfigure(1, pad=6)
+        self.settings_frame.rowconfigure(2, pad=6)
+        self.settings_frame.rowconfigure(3, pad=6)
+        self.settings_frame.rowconfigure(4, pad=6)
+        self.settings_frame.rowconfigure(5, pad=6)
+        self.settings_frame.rowconfigure(6, pad=6)
+        self.settings_frame.rowconfigure(7, pad=6)
+        self.settings_frame.rowconfigure(8, pad=6)
+        
+        # Create boxes to enter relevant information
+        set_desired_azimuth_L = tk.Label(self.settings_frame, text="Desired Azimuth")
+        set_desired_azimuth_B = tk.Entry(self.settings_frame)
+        set_desired_azimuth_L.grid(row=0, column=0)
+        set_desired_azimuth_B.grid(row=0, column=1)
+
+        set_desired_elevation_L = tk.Label(self.settings_frame, text="Desired Elevation")
+        set_desired_elevation_B = tk.Entry(self.settings_frame)
+        set_desired_elevation_L.grid(row=1, column=0)
+        set_desired_elevation_B.grid(row=1, column=1)
+
+        # Target Section
+        target_info = tk.Label(self.settings_frame, text="Target Coordinates", relief=tk.GROOVE)
+        target_info.grid(row=2, column=0, columnspan=2)
+
+        target_latitude_L = tk.Label(self.settings_frame, text="Latitude")
+        target_latitude_L.grid(row=3, column=0)
+        target_latitude_B = tk.Entry(self.settings_frame)
+        target_latitude_B.grid(row=3, column=1)
+
+        target_longitude_L = tk.Label(self.settings_frame, text="Longitude")
+        target_longitude_L.grid(row=4, column=0)
+        target_longitude_B = tk.Entry(self.settings_frame)
+        target_longitude_B.grid(row=4, column=1)
+
+        # Pedestal Section
+        pedestal_info = tk.Label(self.settings_frame, text="Pedestal Coordinates", relief=tk.GROOVE)
+        pedestal_info.grid(row=5, column=0, columnspan=2)
+
+        pedestal_latitude_L = tk.Label(self.settings_frame, text="Latitude")
+        pedestal_latitude_L.grid(row=6, column=0)
+        pedestal_latitude_B = tk.Entry(self.settings_frame)
+        pedestal_latitude_B.grid(row=6, column=1)
+
+        pedestal_longitude_L = tk.Label(self.settings_frame, text="Longitude")
+        pedestal_longitude_L.grid(row=7, column=0)
+        pedestal_longitude_B = tk.Entry(self.settings_frame)
+        pedestal_longitude_B.grid(row=7, column=1)
+
+        apply_settings_button = tk.Button(self.settings_frame, text="Apply", command=self.apply_settings)
+        apply_settings_button.grid(row=8, column=0)
+        destroy_settings = tk.Button(self.settings_frame, text="Cancel", command=self.settings_window.destroy)
+        destroy_settings.grid(row=8, column=1)
+
+    def apply_settings(self):
+        self.settings_window.destroy()
 
 def main():
     root = tk.Tk()
